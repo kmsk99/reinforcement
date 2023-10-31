@@ -3,6 +3,8 @@ from selenium import webdriver
 import pyautogui
 import time
 from gym.spaces import Discrete
+import cv2
+import pytesseract
 
 
 class SuikaEnv(gym.Env):
@@ -36,12 +38,22 @@ class SuikaEnv(gym.Env):
 
     def _get_state(self):
         self.game_board.screenshot("game_board.png")
-        # TODO: 게임 상태를 반환하는 방법을 정의
-        pass
+        return "game_board.png"
 
     def _get_reward(self):
-        # TODO: 보상을 계산하고 반환
-        pass
+        # 게임 보드 스크린샷 읽기
+        img = cv2.imread("game_board.png")
+
+        # 상단 왼쪽 영역에서 점수 추출을 위한 이미지 크롭 (크기와 위치는 게임에 따라 조절이 필요합니다.)
+        roi = img[0:50, 0:150]
+
+        # pytesseract를 사용하여 이미지에서 텍스트 추출
+        score_text = pytesseract.image_to_string(roi, config="--psm 6")
+
+        # 텍스트에서 숫자만 추출
+        score = int("".join(filter(str.isdigit, score_text)))
+
+        return score
 
     def _is_done(self):
         # TODO: 게임이 종료되었는지 확인하고 반환
